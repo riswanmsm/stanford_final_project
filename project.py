@@ -1,3 +1,21 @@
+"""
+    This program will open provided world map image
+    Read latitude, longitude and population data from countries csv file provided in countries population folder
+    Read total covid 19 infected cases from txt files in the countries covid directory
+    Plot on the world map according to the data read from these files
+    Get all the total population from all the city population data and divide city population by that to get population density
+    If population density is higher plot the pixel of the image in the lat long cordinate 
+    High density will be red and law will be black and the color vary between these two according to the density
+    Covid cases for that country divided by the country population gathered from the cities and marked as covid effect
+    If covid effect high green colour of the pixer will be high otherwise green will be 0 so green varies between 0 and 255
+    The pixel representing cities will be shown according to the below
+        if population density is high and covid effect is high - pixel.red = high and pixel.green = high so it will looks yeellow
+        if population density is low and covid effect is high - pixel.red = low and pixel.green = high so it will looks green
+        if population density is low and covid effect is low - pixel.red = low and pixel.green = low so it will looks black
+    * The data gathered here is from the files provided for our course in Ed platform
+    * The total population and the country population covid cases are taken from those files
+    * Some places country population is lower than country covid case because the country population only counts from the cities provided in the file 
+"""
 from simpleimage import SimpleImage
 import os
 
@@ -10,8 +28,6 @@ MIN_LONGITUDE = -180
 MAX_LONGITUDE = 180
 MIN_LATITUDE = -90
 MAX_LATITUDE = 90
-
-lst_population_density = []
 
 def plot_country(visualization, filename, covid_file_name, world_population):
     """
@@ -32,7 +48,7 @@ def plot_country(visualization, filename, covid_file_name, world_population):
     for i in range(len(lat)):
         population_density = get_population_density(population[i], world_population)  
         if population_density > 0:
-            print(population_density, covid_effect)
+            # print(population_density, covid_effect)
             plot_one_city(visualization, lat[i], lon[i], population_density, covid_effect)
 
 def get_plot_data(filename):
@@ -68,8 +84,8 @@ def get_population_density(city_population, world_population):
     return 50000 * city_population / world_population
 
 def get_covid_effect(country_covid_cases, country_city_population):
-    lst_population_density.append(10 * country_covid_cases / country_city_population)
-    return 10 * country_covid_cases / country_city_population
+    # lst_population_density.append(10 * country_covid_cases / country_city_population)
+    return 8 * country_covid_cases / country_city_population
 
 def plot_one_city(visualization, latitude, longitude, population_density, covid_effect):
 
@@ -96,20 +112,8 @@ def latitude_to_y(latitude):
 def plot_pixel(visualization, x, y, population_density, covid_effect):
     pixel = visualization.get_pixel(x, y)
     pixel.red = 255 if 255 * population_density > 255 else int(255 * population_density)
-    pixel.green = 0
-    pixel.blue = 255 if 255 * covid_effect > 255 else int(255 * covid_effect)
-    # print(pixel.red, pixel.green)
-    
-def convert_to_gray(image):
-    for pixel in image:
-        if pixel.green < 220:
-            pixel.red = 255
-            pixel.green = 255
-            pixel.blue = 255
-        else:
-            pixel.red = 0
-            pixel.green = 0
-            pixel.blue = 0
+    pixel.green = 255 if 255 * covid_effect > 255 else int(255 * covid_effect)
+    pixel.blue = 0
 
 def get_world_population(all_countries):
     world_population = 0
@@ -128,21 +132,13 @@ def get_world_population(all_countries):
     
 def main():
     image = SimpleImage(DEFAULT_IMAGE)
-    # convert_to_gray(image)
 
-    # image = SimpleImage.blank(VISUALIZATION_WIDTH, VISUALIZATION_HEIGHT)
     all_countries = [s.split(".")[0] for s in os.listdir(COUNTRY_POPULATION_DIRECTORY)]
-    all_covid_data = [s.split(".")[0] for s in os.listdir(COUNTRY_COVID_DIRECTORY)]
     world_population = get_world_population(all_countries)
     for country in all_countries:
         country_filename = COUNTRY_POPULATION_DIRECTORY + country + ".csv"
         covid_file_name = COUNTRY_COVID_DIRECTORY + country + ".txt"
         plot_country(image, country_filename, covid_file_name, world_population)
-
-    lst_population_density.sort()
-    # print(lst_population_density)
-    # print(max(lst_population_density))
-    # print(min(lst_population_density))
 
     image.show()
     
